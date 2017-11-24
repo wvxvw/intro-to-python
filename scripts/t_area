@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+# -*- mode: python -*-
+
+from argparse import ArgumentParser
+
+from intro_to_python.assignment2 import area_of_triangle
+
+
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('--base', default=12, help='Base of a triangle')
+    parser.add_argument('--height', default=16, help='Height of a triangle')
+    args = parser.parse_args()
+    print(area_of_triangle(args.base, args.height))
+
+
+main()
