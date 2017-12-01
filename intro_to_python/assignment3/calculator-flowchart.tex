@@ -1,0 +1,188 @@
+% Created 2017-12-01 Fri 13:43
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\usepackage[utf8]{inputenc}
+\usepackage{commath}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{shapes,backgrounds,arrows.meta}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
+\usepackage{marginnote}
+\usepackage{listings}
+\usepackage{enumerate}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\setlength{\parskip}{16pt plus 2pt minus 2pt}
+\renewcommand{\arraystretch}{1.6}
+\author{Oleg Sivokon}
+\date{\textit{<2017-12-01 Fri>}}
+\title{Assignment 3, Flowcharts}
+\hypersetup{
+  pdfkeywords={Data-Structures, Algorithms, Assignment},
+  pdfsubject={Third assignment in the course Intro to Python},
+  pdfcreator={Emacs 25.3.1 (Org mode 8.2.10)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\definecolor{codebg}{rgb}{0.96,0.99,0.8}
+\definecolor{codestr}{rgb}{0.46,0.09,0.2}
+\lstset{%
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize,
+  breakatwhitespace=false,
+  breaklines=false,
+  captionpos=b,
+  framexleftmargin=10pt,
+  xleftmargin=10pt,
+  framerule=0pt,
+  frame=tb,
+  keepspaces=true,
+  keywordstyle=\color{blue},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stringstyle=\color{codestr},
+  tabsize=2
+}
+\lstnewenvironment{maxima}{%
+  \lstset{%
+    backgroundcolor=\color{codebg},
+    escapeinside={(*@}{@*)},
+    aboveskip=20pt,
+    captionpos=b,
+    label=,
+    caption=,
+    showstringspaces=false,
+    frame=single,
+    framerule=0pt,
+    basicstyle=\ttfamily\scriptsize,
+    columns=fixed}}{}
+}
+\makeatletter
+\newcommand{\verbatimfont}[1]{\renewcommand{\verbatim@font}{\ttfamily#1}}
+\makeatother
+\verbatimfont{\small}%
+\clearpage
+
+\section{Very simple calculator}
+\label{sec-1}
+This calculator works similar to earlieast \href{https://en.wikipedia.org/wiki/Hewlett-Packard_9100A}{HP 9100A calculator},
+However, it can only add, subtract, divide and multiply.
+
+\subsection{Reverse Polish Notation}
+\label{sec-1-1}
+Calculator uses reverse Polish notation (assignment doesn't specify
+the notation to be used) because it is easier to implement, it
+allows variable number of operands (assignment requires two
+operands, but doesn't state bounds), and because this is typical in
+professional calculators.
+
+Conceptually, this means that operands are written before the
+operation, the operation ``consumes'' all operands to the left of
+it.  See the grammar below for more formal description:
+
+\begin{align*}
+  &S \to Num (Delim \; Num)^* Op \\
+  &Delim \to \;\sim (Digit \;|\; Op)^+ \\
+  &Op \to + \;|\; - \;|\; * \;|\; / \\
+  &Digit \to [0..9] \\
+  &Num \to Digit^+ \;.
+\end{align*}
+
+
+\subsection{Two stacks and two streams}
+\label{sec-1-2}
+Conceptually, the calculator operates on two stacks and two streams:
+
+\begin{description}
+\item[{character stack}] Is used to accumulate characters to later
+interpret them as a number.
+\item[{number stack}] Is used to accumulate numbers to later feed them
+to the selected operation.
+
+\item[{input stream}] Is used to read the input from user.
+\item[{output stream}] Is used to print the results.
+\end{description}
+
+\subsection{Limitations}
+\label{sec-1-3}
+\begin{itemize}
+\item To simplify the code, the calculator only works with positive
+integers.
+\item The limits on the number of arguments, size of integers etc. are
+all the same as for the Python interpreter used.
+\item Division by zero is handled by Python itself, not this program.
+\end{itemize}
+
+\section{Flowchart diagram}
+\label{sec-2}
+
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum
+  width=3cm, minimum height=1cm,text centered, draw=black,
+  fill=red!30]
+
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right
+  angle=110, minimum width=3cm, minimum height=1cm, text centered,
+  draw=black, fill=blue!30]
+
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum
+  height=1cm, text centered, draw=black, fill=orange!30]
+
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum
+  height=1cm, text centered, draw=black, fill=green!30]
+
+\tikzstyle{arrow} = [thick,->,>=Stealth]
+
+\begin{tikzpicture}[align=center, node distance=2.5cm and 2cm]
+
+  \node (start) [startstop] {Start};
+  \node (in1) [io, below of=start] {Input character};
+  \node (dec1) [decision, below of=in1] {Is delimiter?};
+  \node (proc1) [process, right= of dec1] {Empty\\character\\stack};
+  \node (proc2) [process, left= of dec1] {Push to\\character\\stack};
+  \node (dec2) [decision, below of=proc1] {Is operator?};
+  \node (proc3) [process, below of=dec2] {Empty\\number\\stack};
+  \node (proc4) [process, below of=proc3] {Apply\\operator};
+  \node (proc5) [process, below of=proc4] {Print\\result};
+  \node (proc6) [process, left= of dec2] {Push to\\number\\stack};
+  \node (dec3) [decision, left= of proc3] {Is number?};
+  \node (proc7) [process, left= of dec3] {Display error};
+
+  \draw [arrow] (start) -- (in1);
+  \draw [arrow] (in1) -- (dec1);
+  \draw [arrow] (dec1) -- node[anchor=south] {yes} (proc1);
+  \draw [arrow] (dec1) -- node[anchor=south] {no} (proc2);
+  \draw [arrow] (proc1) -- (dec2);
+  \draw [arrow] (dec2) -- node[anchor=west] {yes} (proc3);
+  \draw [arrow] (dec2) -- node[anchor=south] {no} (dec3);
+  \draw [arrow] (dec3) -- node[anchor=west] {yes} (proc6);
+  \draw [arrow] (dec3) -- node[anchor=south] {no} (proc7);
+  \draw [arrow] (proc3) -- (proc4);
+  \draw [arrow] (proc4) -- (proc5);
+
+\end{tikzpicture}
+
+To simplify the diagram, all transitions from final states to the input state
+have been omitted.
+% Emacs 25.3.1 (Org mode 8.2.10)
+\end{document}

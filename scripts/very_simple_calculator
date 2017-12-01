@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+# -*- mode: python -*-
+
+import sys
+
+from intro_to_python.assignment3 import Calculator
+
+
+Calculator(sys.stderr).read(sys.stdin)

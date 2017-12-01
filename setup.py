@@ -11,11 +11,15 @@ setup(
     url='https://github.com/wvxvw/intro-to-python',
     packages=[
         'intro_to_python',
-        'intro_to_python.assignment2'
+        'intro_to_python.assignment2',
+        'intro_to_python.assignment3'
     ],
     package_dir={'intro_to_python': 'intro_to_python'},
     package_data={'intro_to_python': ['etc/*.*']},
-    scripts=['scripts/t_area'],
+    scripts=[
+        'scripts/t_area',
+        'scripts/very_simple_calculator'
+    ],
     install_requires=[
         'configparser >= 3.5.0',
     ],
