@@ -1,0 +1,135 @@
+# -*- fill-column: 80; org-confirm-babel-evaluate: nil -*-
+
+#+TITLE:     Assignment 3, Flowcharts
+#+AUTHOR:    Oleg Sivokon
+#+EMAIL:     olegsivokon@gmail.com
+#+DATE:      <2017-12-01 Fri>
+#+DESCRIPTION: Third assignment in the course Intro to Python
+#+KEYWORDS: Data-Structures, Algorithms, Assignment
+#+LANGUAGE: en
+#+LaTeX_CLASS: article
+#+LATEX_HEADER: \usepackage{commath}
+#+LATEX_HEADER: \usepackage{pgf}
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usetikzlibrary{shapes,backgrounds,arrows.meta}
+#+LATEX_HEADER: \usetikzlibrary{arrows.meta}
+#+LATEX_HEADER: \usetikzlibrary{positioning}
+#+LATEX_HEADER: \usepackage{marginnote}
+#+LATEX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{enumerate}
+#+LATEX_HEADER: \usepackage{algpseudocode}
+#+LATEX_HEADER: \usepackage{algorithm}
+#+LATEX_HEADER: \usepackage{mathtools}
+#+LATEX_HEADER: \setlength{\parskip}{16pt plus 2pt minus 2pt}
+#+LATEX_HEADER: \renewcommand{\arraystretch}{1.6}
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (setq org-latex-pdf-process
+        '("latexmk -pdflatex='pdflatex -shell-escape -interaction nonstopmode' -pdf -f %f")
+        org-latex-listings t
+        org-src-fontify-natively t
+        org-babel-latex-htlatex "htlatex")
+
+  (defmacro by-backend (&rest body)
+    `(progn
+       (cl-case org-export-current-backend ,@body)))
+#+END_SRC
+
+#+RESULTS:
+: by-backend
+
+#+BEGIN_LATEX
+\definecolor{codebg}{rgb}{0.96,0.99,0.8}
+\definecolor{codestr}{rgb}{0.46,0.09,0.2}
+\lstset{%
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize,
+  breakatwhitespace=false,
+  breaklines=false,
+  captionpos=b,
+  framexleftmargin=10pt,
+  xleftmargin=10pt,
+  framerule=0pt,
+  frame=tb,
+  keepspaces=true,
+  keywordstyle=\color{blue},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stringstyle=\color{codestr},
+  tabsize=2
+}
+\lstnewenvironment{maxima}{%
+  \lstset{%
+    backgroundcolor=\color{codebg},
+    escapeinside={(*@}{@*)},
+    aboveskip=20pt,
+    captionpos=b,
+    label=,
+    caption=,
+    showstringspaces=false,
+    frame=single,
+    framerule=0pt,
+    basicstyle=\ttfamily\scriptsize,
+    columns=fixed}}{}
+}
+\makeatletter
+\newcommand{\verbatimfont}[1]{\renewcommand{\verbatim@font}{\ttfamily#1}}
+\makeatother
+\verbatimfont{\small}%
+\clearpage
+#+END_LATEX
+
+* Compare function
+  This function used to be in Python 2 standard library, but for no real reason
+  it was removed fro Python 3.  Here we give a possible implementation
+
+** Algorithm
+   This algorithm relies on the fact that Python will convert logical values
+   into integers when they are used as arguments to arithmetic operations,
+   specifically, subtraction.  Thus:
+   1. ~True - False = 1~
+   2. ~True - True = 0~
+   3. ~False - False = 0~
+   4. ~False - True = -1~
+
+   #+HEADER: :exports results
+   #+HEADER: :results (by-backend (pdf "latex") (t "raw"))
+   #+BEGIN_SRC latex
+     \begin{algorithm}
+       \caption{Three-way comparison function a.k.a. arithmetic if (Fortran)
+         \label{alg:cmp-function}}
+       \begin{algorithmic}[1]
+         \Require{$x$ and $y$ are drawn from a set with some (partial or total) ordering}
+         \Statex
+         \Function{Compare}{$x, y$}
+         \State{$z \leftarrow x < y$} \Comment{$z$ is still a logical variable}
+         \State{$q \leftarrow x > y$}
+         \Comment{$q$ will only equal to $z$ if neither $x > y$ nor $x < y$}
+         \State \Return{$z - q$}
+         \EndFunction
+       \end{algorithmic}
+     \end{algorithm}
+     \newpage
+   #+END_SRC
+
+** Implementation
+   The implementation of the algorithm given above:
+
+   #+BEGIN_SRC python
+     def compare(a, b):
+         '''
+         Arguments ``a`` and ``b`` are drawn from the same ordered set.
+         This function makes no assumptions about whether the order is
+         total or partial.
+
+         This function returns:
+             1  if a < b
+             -1 if a > b
+             0  if a = b
+
+         :param a: Must be comparable to ``b``.
+         :param b: Must be comparable to ``a``.
+         '''
+         return ((a > b) - (a < b))
+   #+END_SRC

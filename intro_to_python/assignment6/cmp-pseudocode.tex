@@ -1,0 +1,143 @@
+% Created 2017-12-22 Fri 16:12
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\usepackage[utf8]{inputenc}
+\usepackage{commath}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{shapes,backgrounds,arrows.meta}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
+\usepackage{marginnote}
+\usepackage{listings}
+\usepackage{enumerate}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\setlength{\parskip}{16pt plus 2pt minus 2pt}
+\renewcommand{\arraystretch}{1.6}
+\author{Oleg Sivokon}
+\date{\textit{<2017-12-01 Fri>}}
+\title{Assignment 3, Flowcharts}
+\hypersetup{
+  pdfkeywords={Data-Structures, Algorithms, Assignment},
+  pdfsubject={Third assignment in the course Intro to Python},
+  pdfcreator={Emacs 25.3.1 (Org mode 8.2.10)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\definecolor{codebg}{rgb}{0.96,0.99,0.8}
+\definecolor{codestr}{rgb}{0.46,0.09,0.2}
+\lstset{%
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize,
+  breakatwhitespace=false,
+  breaklines=false,
+  captionpos=b,
+  framexleftmargin=10pt,
+  xleftmargin=10pt,
+  framerule=0pt,
+  frame=tb,
+  keepspaces=true,
+  keywordstyle=\color{blue},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stringstyle=\color{codestr},
+  tabsize=2
+}
+\lstnewenvironment{maxima}{%
+  \lstset{%
+    backgroundcolor=\color{codebg},
+    escapeinside={(*@}{@*)},
+    aboveskip=20pt,
+    captionpos=b,
+    label=,
+    caption=,
+    showstringspaces=false,
+    frame=single,
+    framerule=0pt,
+    basicstyle=\ttfamily\scriptsize,
+    columns=fixed}}{}
+}
+\makeatletter
+\newcommand{\verbatimfont}[1]{\renewcommand{\verbatim@font}{\ttfamily#1}}
+\makeatother
+\verbatimfont{\small}%
+\clearpage
+
+\section{Compare function}
+\label{sec-1}
+This function used to be in Python 2 standard library, but for no real reason
+it was removed fro Python 3.  Here we give a possible implementation
+
+\subsection{Algorithm}
+\label{sec-1-1}
+This algorithm relies on the fact that Python will convert logical values
+into integers when they are used as arguments to arithmetic operations,
+specifically, subtraction.  Thus:
+\begin{enumerate}
+\item \verb~True - False = 1~
+\item \verb~True - True = 0~
+\item \verb~False - False = 0~
+\item \verb~False - True = -1~
+\end{enumerate}
+
+\begin{algorithm}
+  \caption{Three-way comparison function a.k.a. arithmetic if (Fortran)
+    \label{alg:cmp-function}}
+  \begin{algorithmic}[1]
+    \Require{$x$ and $y$ are drawn from a set with some (partial or total) ordering}
+    \Statex
+    \Function{Compare}{$x, y$}
+    \State{$z \leftarrow x < y$} \Comment{$z$ is still a logical variable}
+    \State{$q \leftarrow x > y$}
+    \Comment{$q$ will only equal to $z$ if neither $x > y$ nor $x < y$}
+    \State \Return{$z - q$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+\newpage
+
+\subsection{Implementation}
+\label{sec-1-2}
+The implementation of the algorithm given above:
+
+\lstset{language=Python,label= ,caption= ,numbers=none}
+\begin{lstlisting}
+def compare(a, b):
+    '''
+    Arguments ``a`` and ``b`` are drawn from the same ordered set.
+    This function makes no assumptions about whether the order is
+    total or partial.
+
+    This function returns:
+        1  if a < b
+        -1 if a > b
+        0  if a = b
+
+    :param a: Must be comparable to ``b``.
+    :param b: Must be comparable to ``a``.
+    '''
+    return ((a > b) - (a < b))
+\end{lstlisting}
+% Emacs 25.3.1 (Org mode 8.2.10)
+\end{document}

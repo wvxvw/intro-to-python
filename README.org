@@ -29,6 +29,9 @@
 * Running
   After installing, these scripts will become available:
   - =t_area= - calculates area of triangle.
+  - =very_simple_calculator= - reverse Polish notation calculator for basic
+    arithmetic operations on positive integers.
+  - =bool= - An implementation of =cmp= Python built-in.
 
   Each script takes =-h= and =--help= options to describe additional
   options and arguments.

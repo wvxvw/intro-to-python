@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# bool is an extremely bad name for this script: neither its input,
+# nor its output is boolean, but this is the requirement of this
+# assignment.
+from intro_to_python.assignment6 import compare
+
+prompts = ('Compare: ', 'To: ')
+args = [None] * 2
+
+for n, prompt in enumerate(prompts):
+    # The assignment doesn't specify that numbers or any other Python
+    # types should be parsed from user's input, so... I don't parse
+    # anything, and only compare strings.
+    try:
+        args[n] = input(prompt)
+    except KeyboardInterrupt:
+        print('Goodbye!')
+        exit(0)
+
+print(compare(*args))
