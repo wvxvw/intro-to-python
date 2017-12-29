@@ -1,0 +1,314 @@
+% Created 2017-12-29 Fri 18:32
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\usepackage[utf8]{inputenc}
+\usepackage{commath}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{shapes,backgrounds,arrows.meta}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
+\usepackage{marginnote}
+\usepackage{listings}
+\usepackage{enumerate}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\setlength{\parskip}{16pt plus 2pt minus 2pt}
+\renewcommand{\arraystretch}{1.6}
+\author{Oleg Sivokon}
+\date{\textit{<2017-12-29 Fri>}}
+\title{Assignment 7, Flowcharts}
+\hypersetup{
+  pdfkeywords={Data-Structures, Algorithms, Assignment},
+  pdfsubject={Seventh assignment in the course Intro to Python},
+  pdfcreator={Emacs 25.3.1 (Org mode 8.2.10)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\definecolor{codebg}{rgb}{0.96,0.99,0.8}
+\definecolor{codestr}{rgb}{0.46,0.09,0.2}
+\lstset{%
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize,
+  breakatwhitespace=false,
+  breaklines=false,
+  captionpos=b,
+  framexleftmargin=10pt,
+  xleftmargin=10pt,
+  framerule=0pt,
+  frame=tb,
+  keepspaces=true,
+  keywordstyle=\color{blue},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stringstyle=\color{codestr},
+  tabsize=2
+}
+\lstnewenvironment{maxima}{%
+  \lstset{%
+    backgroundcolor=\color{codebg},
+    escapeinside={(*@}{@*)},
+    aboveskip=20pt,
+    captionpos=b,
+    label=,
+    caption=,
+    showstringspaces=false,
+    frame=single,
+    framerule=0pt,
+    basicstyle=\ttfamily\scriptsize,
+    columns=fixed}}{}
+}
+\makeatletter
+\newcommand{\verbatimfont}[1]{\renewcommand{\verbatim@font}{\ttfamily#1}}
+\makeatother
+\verbatimfont{\small}%
+\clearpage
+
+\section{Sorting Lines Synchronously}
+\label{sec-1}
+This is an extremely simple task, since all the code was, essentially, written
+before me.  All I need is to compose the following methods:
+\verb~io.IOBase.readlines()~ to \verb~sorted()~ to \verb~io.IOBase.writelines()~ in this
+exact order.  First will read lines, second will sort them and the third
+will write them sorted.
+
+Unfortunately, the example input file contains some junk (incorrect line
+delimiters and empty lines).  Thus we also need to sanitize and filter
+what we read from \verb~readlines()~.
+
+\subsection{Algorithm}
+\label{sec-1-1}
+\begin{algorithm}
+  \caption{Read and sort lines in a file
+    \label{alg:read-sort-lines-function}}
+  \begin{algorithmic}[1]
+    \Require{$input$ exists and is readable}
+    \Statex
+    \Function{Sync-read-sort}{$input, output$}
+    \State \Return{$write(sort(filter(read(file))), output)$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Implementation}
+\label{sec-1-2}
+
+\lstset{language=Python,label= ,caption= ,numbers=none}
+\begin{lstlisting}
+# Assuming `source' parameter is an already opened file,
+# and the writing to file will be taken care of by another
+# procedure:
+
+def simple_sort_lines(source):
+    return sorted(line for line in source if line.strip())
+\end{lstlisting}
+
+Some explanation may be due.
+
+\begin{enumerate}
+\item \verb~sorted()~ accepts iterators as well as lists, and in such case, will only
+read the values once, so no extra reading will be performed.
+\item \verb~sorted()~ produces a list.  It is possible, to write an algorithm which
+generates sorted lines on-line, without having to deal with the entire
+list at a time, but this would take too much space to write about here,
+and the implementation would be quite complex.  However, I note that
+\verb~nth_order_statistic()~ could be used for such task.
+\item File-like objects in Python are also iterators, and it just so
+conveniently happened that the iterator implemented by file-like objects
+iterates by line.
+\item The lines thus produced have \verb~\n~ character appended to them.  This is
+intentional, since \verb~io.IOBase.writelines()~ doesn't append it on its own.
+\end{enumerate}
+
+\section{Sorting Lines Asynchronously}
+\label{sec-2}
+This is a more interesting task.  But the idea is still very simple:  I can
+split the work between multiple workers, where each worker will sort its
+chunk of the lines it reads, then I could collect all chunks and sort them
+together.
+
+The algorithm thus uses a popular in concurrent programming scheme:
+``Scatter-Join''.
+
+The non-trivial parts of this algorithm deal with ensuring that no worker
+reads the input intended for another worker, and that merging doesn't do too
+much work.  First is ensured by that each worker will skip ahead to the first
+line break after seeking to an arbitrary position in file.  This is while each
+worker will also read only full lines, while it is allowed to read more than
+the chunk allocated to it.  This means that some parts of the file will be
+read more than once, and that the worker who gets to read the very beginning
+of the file is not allowed to skip the first line it reads.
+
+\subsection{Algorithm}
+\label{sec-2-1}
+I will only illustrate the concerns raised in the previous chapter:
+
+We can easily see that we can pre-compute all the necessary information to
+make inner \verb~while~ loops independent, and so we can split the work between
+independent workers.
+
+\begin{algorithm}
+  \caption{Ensure workload is distributed evenly and all lines are read
+    \label{alg:workload-distribution}}
+  \begin{algorithmic}[1]
+    \Require{$length(f)$ gives the length of the file $f$}
+    \Require{$seek(f, n)$ seeks to the position $n$ in file $f$}
+    \Require{$position(f)$ gives the position at which $f$ is being read}
+    \Require{$append(a, b)$ appends lists $a$ and $b$}
+    \Require{$merge(lists)$ produces a sorted list with elements drawn from each list in $lists$}
+    \Statex
+    \Function{Distribute-work}{$input, workers$}
+    \State{$size \gets length(input)$}
+    \State{$lines \gets$ Empty List}
+    \For{\texttt{$i \gets 0$; $i < workers$; $i \gets i + 1$}}
+    \State{$seek(input, i * \frac{size}{workers})$}
+    \State{$lines_i \gets$ Empty List}
+    \If{$i \neq 0$}
+    \Comment{Skip line that will be read by the previous worker}
+    \State{$readline(input)$}
+    \EndIf
+    \While{$position(file) < (i + 1) * \frac{size}{workers}$}
+    \State{$lines_i \gets append(lines_i, readline(input))$}
+    \EndWhile
+    \State{$lines \gets append(lines, lines_i)$}
+    \EndFor
+    \State \Return{$merge(lines)$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+  \caption{Merges sorted arrays $A$ and $B$ to obtain third sorted array $C$
+    \label{alg:merge}}
+  \begin{algorithmic}[1]
+    \Require{$length(X)$ gives the length of array $X$}
+    \Statex
+    \Function{Merge}{$A, B$}
+    \State{$alength \gets length(A)$}
+    \State{$blength \gets length(B)$}
+    \State{$apos \gets 0$}
+    \State{$bpos \gets 0$}
+    \State{$clength \gets alength + blength$}
+    \State{$C \gets array(clength)$}
+    \State{$cpos \gets 0$}
+    \While{$alength > apos \land blength > bpos$}
+    \If{$A_{apos} \leq B_{bpos}$}
+    \State{$C_{cpos} \gets A_{apos}$}
+    \State{$apos \gets apos + 1$}
+    \Else
+    \State{$C_{cpos} \gets B_{bpos}$}
+    \State{$bpos \gets bpos + 1$}
+    \EndIf
+    \State{$cpos \gets cpos + 1$}
+    \EndWhile
+    \If{$apos = alength$}
+    \State{$remainder \gets B$}
+    \State{$rpos \gets bpos$}
+    \Else
+    \State{$remainder \gets A$}
+    \State{$rpos \gets apos$}
+    \EndIf
+    \While{$rpos < length(remainder)$}
+    \State{$C_{cpos} \gets remainder_{rpos}$}
+    \State{$cpos \gets cpos + 1$}
+    \State{$rpos \gets rpos + 1$}
+    \EndWhile
+    \State \Return{$C$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+\pagebreak
+
+The \verb~merge()~ function is the same one used in textbook \verb~merge-sort()~
+procedure.  For completeness, the pseudocode is given below:
+
+\subsection{Implementation}
+\label{sec-2-2}
+The implementation of the algorithm given above:
+
+\lstset{language=Python,label= ,caption= ,numbers=none}
+\begin{lstlisting}
+def merge_sync(left, right):
+    left_pos, right_pos = 0, 0
+    left_size, right_size = len(left), len(right)
+    result, remainder = [None] * (left_size + right_size), None
+    result_pos, remainder_pos = 0, 0
+
+    while left_pos < left_size and right_pos < right_size:
+        if left[left_pos] <= right[right_pos]:
+            result[result_pos] = left[left_pos]
+            left_pos += 1
+        else:
+            result[result_pos] = right[right_pos]
+            right_pos += 1
+        result_pos += 1
+
+    if left_pos < left_size:
+        remainder = left
+        remainder_pos = left_pos
+    else:
+        remainder = right
+        remainder_pos = right_pos
+
+    while result_pos < len(result):
+        result[result_pos] = remainder[remainder_pos]
+        result_pos += 1
+        remainder_pos += 1
+    return result
+
+
+async def sort_chunk(queue, source, start, end):
+    chunk = []
+    source.seek(start)
+    source.readline()
+    while source.tell() < end:
+        line = source.readline().strip()
+        if line:
+            chunk.append(line + '\n')
+    await queue.put(sorted(chunk))
+
+
+async def merge(queue, expected_count):
+    result = []
+    for _ in range(expected_count):
+        result = merge_sync(result, await queue.get())
+    return result
+
+
+def async_merge_sort_lines(source, fsize, coroutines_count=0):
+    coroutines_count = coroutines_count or multiprocessing.cpu_count() - 1
+
+    with closing(asyncio.new_event_loop()) as loop:
+        queue = asyncio.Queue(loop=loop)
+        chunk_size = (fsize // coroutines_count) + 1
+        readers = [
+            sort_chunk(queue, source, x, min(x + chunk_size, fsize))
+            for x in range(0, fsize, chunk_size)
+        ]
+        writer = merge(queue, coroutines_count)
+        future = asyncio.gather(*(readers + [writer]), loop=loop)
+        loop.run_until_complete(future)
+        return future.result()[-1]
+\end{lstlisting}
+% Emacs 25.3.1 (Org mode 8.2.10)
+\end{document}
